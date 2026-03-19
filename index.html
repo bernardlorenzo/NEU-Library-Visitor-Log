@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEU Visitor Check-In System</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>NEU Library Visitor Check-In System</h1>
+
+<button id="loginBtn">Login with NEU Google Account</button>
+
+<div id="checkinForm" style="display:none;">
+  <input type="text" id="tapIdOrEmail" placeholder="Enter Tap ID or Email">
+  <select id="purpose">
+    <option value="">Select Purpose</option>
+    <option value="Reading">Reading</option>
+    <option value="Researching">Researching</option>
+    <option value="Computer Use">Computer Use</option>
+    <option value="Assignments">Assignments</option>
+  </select>
+  <button id="logVisitBtn">Log Visit</button>
+</div>
+
+<div id="welcomeMessage" style="display:none;"></div>
+
+<script type="module" src="firebase.js"></script>
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
