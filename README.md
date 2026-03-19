@@ -4,7 +4,7 @@
 Web application to log all NEU student/faculty visits. Admin can view visitor statistics.
 
 ## GitHub Repository
-[Your GitHub Repo Link Here]
+[https://github.com/bernardlorenzo/NEU-Library-Visitor-Log]
 
 ## Live Application
 https://neu-library-visitor-log-57a04.web.app
