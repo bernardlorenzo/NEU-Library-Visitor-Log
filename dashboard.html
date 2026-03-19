@@ -1,16 +1,263 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — NEU Library</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
 
-// Palitan ito ng config ng Firebase mo
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-};
+<!-- ── HEADER ── -->
+<header class="site-header">
+  <a class="brand" href="index.html">
+    <div class="brand-logo">N</div>
+    <div class="brand-text">
+      <span class="brand-name">NEU Library</span>
+      <span class="brand-sub">Admin Dashboard</span>
+    </div>
+  </a>
+  <nav class="header-nav">
+    <span id="adminEmail" class="text-sm text-muted"></span>
+    <a href="index.html" class="nav-btn ghost">Visitor Log</a>
+    <button class="nav-btn accent" onclick="logout()">Sign Out</button>
+  </nav>
+</header>
 
-const app = initializeApp(firebaseConfig);
+<!-- ── DASHBOARD GRID ── -->
+<div class="dashboard-grid">
 
-export const auth = getAuth(app);
-export const provider = new GoogleAuthProvider();
-export const db = getFirestore(app);
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section" style="padding: 0 1.25rem 1rem; border-bottom: 1px solid var(--gray-200); margin-bottom: 1rem;">
+      <div class="welcome-avatar" id="sidebarAvatar" style="width:44px;height:44px;font-size:16px;margin-bottom:8px;">A</div>
+      <div class="text-sm fw-600" id="sidebarName">Admin</div>
+      <div class="text-xs text-muted" id="sidebarRole">System Administrator</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Analytics</div>
+      <button class="sidebar-link active" onclick="showSection('overview')">
+        <span class="link-icon">📊</span> Overview
+      </button>
+      <button class="sidebar-link" onclick="showSection('visitors')">
+        <span class="link-icon">👥</span> Visitor Logs
+      </button>
+    </div>
+
+    <div class="sidebar-section" style="margin-top:0.5rem;">
+      <div class="sidebar-label">Management</div>
+      <button class="sidebar-link" onclick="showSection('blocked')">
+        <span class="link-icon">🚫</span> Blocked Users
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="dashboard-main">
+
+    <!-- OVERVIEW SECTION -->
+    <div id="sectionOverview">
+      <div class="page-titlebar">
+        <div>
+          <h1 class="section-title">Visitor Overview</h1>
+          <p class="section-desc">Library visit statistics and analytics</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="text-xs text-muted" id="lastUpdated"></span>
+          <button class="btn btn-outline btn-sm" onclick="loadStats()">🔄 Refresh</button>
+        </div>
+      </div>
+
+      <!-- Date Tabs -->
+      <div class="date-tabs" id="dateTabs">
+        <button class="date-tab active" data-range="today" onclick="setRange('today', this)">Today</button>
+        <button class="date-tab" data-range="week"  onclick="setRange('week',  this)">This Week</button>
+        <button class="date-tab" data-range="month" onclick="setRange('month', this)">This Month</button>
+        <button class="date-tab" data-range="custom" onclick="setRange('custom', this)">Custom</button>
+      </div>
+
+      <!-- Custom Date Range (hidden by default) -->
+      <div id="customDateRange" class="filter-bar hidden" style="margin-bottom:1.5rem;">
+        <div>
+          <label class="form-label" style="margin-bottom:4px;">From</label>
+          <input type="date" id="dateFrom" class="form-control" style="width:auto;min-width:0;" />
+        </div>
+        <div>
+          <label class="form-label" style="margin-bottom:4px;">To</label>
+          <input type="date" id="dateTo" class="form-control" style="width:auto;min-width:0;" />
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="loadStats()" style="align-self:flex-end;">Apply</button>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card navy-accent anim-fadeinup">
+          <div class="stat-label">Total Visitors</div>
+          <div class="stat-number" id="statTotal">–</div>
+          <div class="stat-meta" id="statPeriod">Selected period</div>
+        </div>
+        <div class="stat-card gold-accent anim-fadeinup anim-delay-1">
+          <div class="stat-label">Students</div>
+          <div class="stat-number" id="statStudents">–</div>
+          <div class="stat-meta">Visitor type: Student</div>
+        </div>
+        <div class="stat-card green-accent anim-fadeinup anim-delay-2">
+          <div class="stat-label">Faculty / Staff</div>
+          <div class="stat-number" id="statEmployees">–</div>
+          <div class="stat-meta">Teachers & employees</div>
+        </div>
+        <div class="stat-card info-accent anim-fadeinup anim-delay-3">
+          <div class="stat-label">Top College</div>
+          <div class="stat-number" style="font-size:1.3rem;" id="statTopCollege">–</div>
+          <div class="stat-meta" id="statTopCollegeCount"></div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar">
+        <select id="filterPurpose" class="form-control" onchange="applyFilters()">
+          <option value="">All Purposes</option>
+          <option value="reading">Reading / Leisure</option>
+          <option value="research">Research</option>
+          <option value="computer">Use of Computer</option>
+          <option value="assignments">Assignments</option>
+          <option value="borrowing">Book Borrowing / Returning</option>
+          <option value="group_study">Group Study</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="filterCollege" class="form-control" onchange="applyFilters()">
+          <option value="">All Colleges</option>
+          <option value="CITE">CITE</option>
+          <option value="CBA">CBA</option>
+          <option value="CAS">CAS</option>
+          <option value="CED">CED</option>
+          <option value="COE">COE</option>
+          <option value="CNS">CNS</option>
+          <option value="CAFS">CAFS</option>
+          <option value="Admin">Admin</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="filterType" class="form-control" onchange="applyFilters()">
+          <option value="">All Visitor Types</option>
+          <option value="student">Student</option>
+          <option value="faculty">Faculty</option>
+          <option value="staff">Staff / Employee</option>
+          <option value="guest">Guest</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="clearFilters()">Clear Filters</button>
+      </div>
+
+      <!-- Visits Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon navy">📋</div>
+          <h3>Visitor Records</h3>
+          <span class="badge badge-navy" id="tableCount" style="margin-left:auto;">0 records</span>
+        </div>
+        <div class="table-wrapper" style="border:none;border-radius:0;box-shadow:none;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Visitor ID / Email</th>
+                <th>Purpose</th>
+                <th>College</th>
+                <th>Type</th>
+                <th>Date & Time</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="visitorsTableBody">
+              <tr>
+                <td colspan="7" class="text-center text-muted" style="padding:2rem;">Loading records…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISITOR LOGS SECTION -->
+    <div id="sectionVisitors" class="hidden">
+      <div class="page-titlebar">
+        <div>
+          <h1 class="section-title">All Visitor Logs</h1>
+          <p class="section-desc">Complete history of all recorded visits</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body text-center text-muted" style="padding:3rem;">
+          Switch to <strong>Overview</strong> to view visitor records with filters.
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOCKED USERS SECTION -->
+    <div id="sectionBlocked" class="hidden">
+      <div class="page-titlebar">
+        <div>
+          <h1 class="section-title">Blocked Users</h1>
+          <p class="section-desc">Manage blocked visitor accounts</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background:var(--danger-bg);">🚫</div>
+          <h3>Blocked Accounts</h3>
+        </div>
+        <div class="table-wrapper" style="border:none;border-radius:0;box-shadow:none;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Visitor ID / Email</th>
+                <th>Blocked At</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="blockedTableBody">
+              <tr>
+                <td colspan="3" class="text-center text-muted" style="padding:2rem;">Loading…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /dashboard-main -->
+</div><!-- /dashboard-grid -->
+
+<footer class="site-footer">
+  © 2025 <span>New Era University</span> · Library Visitor Log — Admin Panel
+</footer>
+
+<script src="js/app.js"></script>
+<script>
+  // Dashboard-specific init
+  document.addEventListener('DOMContentLoaded', () => {
+    loadStats();
+    loadBlockedUsers();
+
+    const now = new Date();
+    document.getElementById('lastUpdated').textContent = 'Last updated: ' + now.toLocaleTimeString();
+  });
+
+  function showSection(name) {
+    ['overview','visitors','blocked'].forEach(s => {
+      document.getElementById('section' + s.charAt(0).toUpperCase() + s.slice(1)).classList.add('hidden');
+    });
+    document.getElementById('sectionOverview'.replace('overview', '').replace('visitors','').replace('blocked',''));
+    const map = { overview: 'sectionOverview', visitors: 'sectionVisitors', blocked: 'sectionBlocked' };
+    document.getElementById(map[name]).classList.remove('hidden');
+
+    document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
