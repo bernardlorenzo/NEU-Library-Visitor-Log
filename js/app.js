@@ -7,7 +7,7 @@
 // TODO: Replace these placeholders with your actual Firebase project credentials.
 // Get them from: Firebase Console → Your Project → Project Settings → General → Your apps → SDK setup
 const firebaseConfig = {
-  apiKey:            "AIzaSyO1DzTboqJzSJYACL4CS9MnARV_XoP-Afc",
+  apiKey:            "AIzaSyD1DzTboqJzSJYACL4CS9MnARV_XoP-Afc",
   authDomain:        "neu-library-visitor-log-57a04.firebaseapp.com",
   projectId:         "neu-library-visitor-log-57a04",
   storageBucket:     "neu-library-visitor-log-57a04.firebasestorage.app",
