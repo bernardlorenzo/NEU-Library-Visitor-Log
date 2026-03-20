@@ -4,8 +4,6 @@
 // ============================================================
 
 // ── FIREBASE CONFIG ──
-// TODO: Replace these placeholders with your actual Firebase project credentials.
-// Get them from: Firebase Console → Your Project → Project Settings → General → Your apps → SDK setup
 const firebaseConfig = {
   apiKey:            "AIzaSyD1DzTboqJzSJYACL4CS9MnARV_XoP-Afc",
   authDomain:        "neu-library-visitor-log-57a04.firebaseapp.com",
@@ -21,31 +19,36 @@ const auth = firebase.auth();
 const db   = firebase.firestore();
 
 // ── ROLE CONFIGURATION ──
-// Emails in this list are treated as admins.
-// For production, store roles in Firestore instead (see README).
 const ADMIN_EMAILS = [
-  "jcesperanza@neu.edu.ph"
-  // Add more admin emails here:
-  // "anotheradmin@neu.edu.ph"
+  "jcesperanza@neu.edu.ph",
+  "bernard.lorenzo@neu.edu.ph"
 ];
 
 function isAdmin(email) {
   return ADMIN_EMAILS.includes((email || '').toLowerCase().trim());
 }
 
+function isNEUEmail(email) {
+  return (email || '').toLowerCase().trim().endsWith('@neu.edu.ph');
+}
+
 // ── AUTH STATE LISTENER ──
-// Runs on every page load; redirects based on role.
 auth.onAuthStateChanged(user => {
   const onDashboard = window.location.pathname.includes('dashboard.html');
   const onIndex     = !onDashboard;
 
   if (user) {
-    // User is signed in
+    // Block non-NEU accounts
+    if (!isNEUEmail(user.email)) {
+      auth.signOut();
+      showAlert('loginAlert', 'danger', '🚫 Access denied. Only NEU institutional accounts (@neu.edu.ph) are allowed.');
+      return;
+    }
+
     if (isAdmin(user.email)) {
       if (onIndex) {
         window.location.href = 'dashboard.html';
       } else {
-        // Populate dashboard header
         const el = document.getElementById('adminEmail');
         if (el) el.textContent = user.email;
         const av = document.getElementById('sidebarAvatar');
@@ -55,48 +58,48 @@ auth.onAuthStateChanged(user => {
       }
     } else {
       if (onDashboard) {
-        // Regular user tried to access dashboard
         window.location.href = 'index.html';
       } else {
-        // Show visitor form
         showVisitorForm(user);
       }
     }
   } else {
-    // Not signed in
     if (onDashboard) {
       window.location.href = 'index.html';
     }
-    // On index page — show login card (default state)
   }
 });
 
 // ── GOOGLE SIGN-IN ──
 function login() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ hd: 'neu.edu.ph' }); // Hint: restrict to NEU domain
+  provider.setCustomParameters({ hd: 'neu.edu.ph' });
 
   auth.signInWithPopup(provider)
     .then(result => {
-      // onAuthStateChanged handles redirect
+      const email = result.user.email;
+      if (!isNEUEmail(email)) {
+        auth.signOut();
+        showAlert('loginAlert', 'danger', '🚫 Access denied. Only NEU institutional accounts (@neu.edu.ph) are allowed.');
+        return;
+      }
     })
     .catch(err => {
       showAlert('loginAlert', 'danger', '⚠️ Login failed: ' + err.message);
     });
 }
 
-// ── EMAIL "LOGIN" (demo: just shows form for @neu.edu.ph) ──
+// ── EMAIL LOGIN ──
 function loginWithEmail() {
   const email = (document.getElementById('emailInput')?.value || '').trim();
   if (!email) {
     showAlert('loginAlert', 'danger', 'Please enter your institutional email.');
     return;
   }
-  if (!email.endsWith('@neu.edu.ph')) {
-    showAlert('loginAlert', 'danger', 'Please use your NEU email (@neu.edu.ph).');
+  if (!isNEUEmail(email)) {
+    showAlert('loginAlert', 'danger', '🚫 Access denied. Only NEU email (@neu.edu.ph) is allowed.');
     return;
   }
-  // For demo: simulate a logged-in user object
   const mockUser = { email: email, displayName: email.split('@')[0], uid: 'email_' + email };
   if (isAdmin(email)) {
     window.location.href = 'dashboard.html';
@@ -114,21 +117,19 @@ function logout() {
 
 // ── SHOW VISITOR FORM ──
 function showVisitorForm(user) {
-  const loginCard     = document.getElementById('loginCard');
-  const heroSection   = document.getElementById('heroSection');
+  const loginCard      = document.getElementById('loginCard');
+  const heroSection    = document.getElementById('heroSection');
   const visitorSection = document.getElementById('visitorSection');
 
   if (loginCard)      loginCard.classList.add('hidden');
   if (heroSection)    heroSection.style.paddingBottom = '3rem';
   if (visitorSection) visitorSection.classList.remove('hidden');
 
-  // Header update
   const headerInfo = document.getElementById('headerUserInfo');
   const btnLogout  = document.getElementById('btnLogout');
   if (headerInfo) { headerInfo.textContent = user.email; headerInfo.classList.remove('hidden'); }
   if (btnLogout)  btnLogout.classList.remove('hidden');
 
-  // Welcome banner
   const avatarEl  = document.getElementById('userAvatar');
   const welcomeEl = document.getElementById('welcomeMsg');
   const emailEl   = document.getElementById('userEmail');
@@ -144,7 +145,6 @@ function showVisitorForm(user) {
       + '<br>' + now.toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit' });
   }
 
-  // Pre-fill visitor ID if email is available
   const visitorInput = document.getElementById('visitorID');
   if (visitorInput && user.email) visitorInput.value = user.email;
 }
@@ -161,14 +161,12 @@ async function logVisitor() {
     return;
   }
 
-  // Check if blocked
   const blockedSnap = await db.collection('blockedUsers').doc(visitorID).get();
   if (blockedSnap.exists && blockedSnap.data().blocked) {
-    showAlert('formAlert', 'danger', '🚫 Your account has been blocked from accessing the library system. Please contact the librarian.');
+    showAlert('formAlert', 'danger', '🚫 Your account has been blocked. Please contact the librarian.');
     return;
   }
 
-  // Show loading state
   const btn  = document.getElementById('submitBtn');
   const text = document.getElementById('submitBtnText');
   const spin = document.getElementById('submitSpinner');
@@ -188,9 +186,9 @@ async function logVisitor() {
   })
   .then(() => {
     showAlert('formAlert', 'success', '✅ Visit logged successfully! Thank you for visiting the NEU Library.');
-    document.getElementById('visitorID').value  = auth.currentUser?.email || '';
-    document.getElementById('college').value    = '';
-    document.getElementById('purpose').value    = '';
+    document.getElementById('visitorID').value   = auth.currentUser?.email || '';
+    document.getElementById('college').value     = '';
+    document.getElementById('purpose').value     = '';
     document.getElementById('visitorType').value = 'student';
   })
   .catch(err => {
@@ -211,17 +209,15 @@ function setRange(range, tabEl) {
   currentRange = range;
   document.querySelectorAll('.date-tab').forEach(t => t.classList.remove('active'));
   if (tabEl) tabEl.classList.add('active');
-
   const customEl = document.getElementById('customDateRange');
   if (customEl) {
     range === 'custom' ? customEl.classList.remove('hidden') : customEl.classList.add('hidden');
   }
-
   if (range !== 'custom') loadStats();
 }
 
 function getDateRange() {
-  const now   = new Date();
+  const now = new Date();
   let startDate, endDate = new Date(now);
   endDate.setHours(23, 59, 59, 999);
 
@@ -256,15 +252,11 @@ function loadStats() {
       allVisitorDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       computeAndRenderStats(allVisitorDocs);
       renderTable(allVisitorDocs);
-
       const lastUpdEl = document.getElementById('lastUpdated');
       if (lastUpdEl) lastUpdEl.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
     })
-    .catch(err => {
-      console.error('loadStats error:', err);
-    });
+    .catch(err => console.error('loadStats error:', err));
 
-  // Update period label
   const periodMap = { today:'Today', week:'This week', month:'This month', custom:'Selected range' };
   const el = document.getElementById('statPeriod');
   if (el) el.textContent = periodMap[currentRange] || '';
@@ -275,22 +267,21 @@ function computeAndRenderStats(docs) {
   const students  = docs.filter(d => d.visitorType === 'student').length;
   const employees = docs.filter(d => d.isEmployee).length;
 
-  // Top college
   const collegeCounts = {};
   docs.forEach(d => { if (d.college) collegeCounts[d.college] = (collegeCounts[d.college] || 0) + 1; });
   const topCollege = Object.entries(collegeCounts).sort((a,b) => b[1]-a[1])[0];
 
-  setText('statTotal',          total);
-  setText('statStudents',       students);
-  setText('statEmployees',      employees);
-  setText('statTopCollege',     topCollege ? topCollege[0] : '–');
-  setText('statTopCollegeCount',topCollege ? topCollege[1] + ' visits' : '');
+  setText('statTotal',           total);
+  setText('statStudents',        students);
+  setText('statEmployees',       employees);
+  setText('statTopCollege',      topCollege ? topCollege[0] : '–');
+  setText('statTopCollegeCount', topCollege ? topCollege[1] + ' visits' : '');
 }
 
 // ── RENDER TABLE ──
 function renderTable(docs) {
-  const tbody    = document.getElementById('visitorsTableBody');
-  const countEl  = document.getElementById('tableCount');
+  const tbody   = document.getElementById('visitorsTableBody');
+  const countEl = document.getElementById('tableCount');
   if (!tbody) return;
 
   if (countEl) countEl.textContent = docs.length + ' record' + (docs.length !== 1 ? 's' : '');
@@ -304,10 +295,10 @@ function renderTable(docs) {
     const ts = d.timestamp?.toDate?.();
     const dateStr = ts ? ts.toLocaleDateString('en-PH', { month:'short', day:'numeric', year:'numeric' }) + ' ' + ts.toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit' }) : '–';
     const typeBadge = {
-      student:  '<span class="badge badge-navy">Student</span>',
-      faculty:  '<span class="badge badge-gold">Faculty</span>',
-      staff:    '<span class="badge badge-info">Staff</span>',
-      guest:    '<span class="badge badge-gray">Guest</span>',
+      student: '<span class="badge badge-navy">Student</span>',
+      faculty: '<span class="badge badge-gold">Faculty</span>',
+      staff:   '<span class="badge badge-info">Staff</span>',
+      guest:   '<span class="badge badge-gray">Guest</span>',
     }[d.visitorType] || '<span class="badge badge-gray">–</span>';
 
     const purposeLabel = {
@@ -322,9 +313,7 @@ function renderTable(docs) {
       <td><span class="badge badge-gray">${escHtml(d.college || '–')}</span></td>
       <td>${typeBadge}</td>
       <td class="text-sm text-muted">${dateStr}</td>
-      <td>
-        <button class="btn btn-danger btn-sm" onclick="blockUser('${escHtml(d.visitorID || '')}')">Block</button>
-      </td>
+      <td><button class="btn btn-danger btn-sm" onclick="blockUser('${escHtml(d.visitorID || '')}')">Block</button></td>
     </tr>`;
   }).join('');
 }
@@ -357,7 +346,6 @@ function clearFilters() {
 function blockUser(visitorID) {
   if (!visitorID) return;
   if (!confirm('Block "' + visitorID + '" from the library system?')) return;
-
   db.collection('blockedUsers').doc(visitorID).set({
     blocked:   true,
     blockedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -380,7 +368,6 @@ function unblockUser(visitorID) {
 function loadBlockedUsers() {
   const tbody = document.getElementById('blockedTableBody');
   if (!tbody) return;
-
   db.collection('blockedUsers').where('blocked', '==', true).get()
     .then(snap => {
       if (snap.empty) {
