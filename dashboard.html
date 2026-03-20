@@ -1,263 +1,330 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — NEU Library</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard · NEU Library</title>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=Public+Sans:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
 </head>
-<body>
+<body style="display:flex;min-height:100vh;background:#fcf9f8;">
 
-<!-- ── HEADER ── -->
-<header class="site-header">
-  <a class="brand" href="index.html">
-    <div class="brand-logo">N</div>
-    <div class="brand-text">
-      <span class="brand-name">NEU Library</span>
-      <span class="brand-sub">Admin Dashboard</span>
+<div id="toast-area" class="toast-container"></div>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div style="padding:1.25rem;border-bottom:1px solid #eae7e7;">
+    <div style="display:flex;align-items:center;gap:.75rem;">
+      <div style="width:2.25rem;height:2.25rem;background:#00682f;border-radius:.75rem;display:flex;align-items:center;justify-content:center;">
+        <span class="material-symbols-outlined fill-icon" style="color:#fff;font-size:18px;">local_library</span>
+      </div>
+      <div>
+        <p style="font-family:'Manrope',sans-serif;font-size:.875rem;font-weight:900;color:#00682f;line-height:1.1;">Library Portal</p>
+        <p style="font-family:'Inter',sans-serif;font-size:.6rem;color:#6e7a6e;text-transform:uppercase;letter-spacing:.1em;">Academic Curator</p>
+      </div>
     </div>
-  </a>
-  <nav class="header-nav">
-    <span id="adminEmail" class="text-sm text-muted"></span>
-    <a href="index.html" class="nav-btn ghost">Visitor Log</a>
-    <button class="nav-btn accent" onclick="logout()">Sign Out</button>
+  </div>
+
+  <nav style="display:flex;flex-direction:column;gap:.25rem;padding:.75rem;flex:1;">
+    <button onclick="showTab('dashboard')" id="nav-dashboard" class="nav-link nav-active">
+      <span class="material-symbols-outlined" style="font-size:18px;">dashboard</span> Dashboard
+    </button>
+    <button onclick="showTab('logs')" id="nav-logs" class="nav-link nav-inactive">
+      <span class="material-symbols-outlined" style="font-size:18px;">list_alt</span> Visitor Logs
+    </button>
+    <button onclick="showTab('users')" id="nav-users" class="nav-link nav-inactive">
+      <span class="material-symbols-outlined" style="font-size:18px;">group</span> User Management
+    </button>
+    <div style="height:1px;background:#eae7e7;margin:.5rem .5rem;"></div>
+    <a href="index.html" class="nav-link nav-inactive" style="text-decoration:none;">
+      <span class="material-symbols-outlined" style="font-size:18px;">how_to_reg</span> Visitor Check-In
+    </a>
   </nav>
-</header>
 
-<!-- ── DASHBOARD GRID ── -->
-<div class="dashboard-grid">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-section" style="padding: 0 1.25rem 1rem; border-bottom: 1px solid var(--gray-200); margin-bottom: 1rem;">
-      <div class="welcome-avatar" id="sidebarAvatar" style="width:44px;height:44px;font-size:16px;margin-bottom:8px;">A</div>
-      <div class="text-sm fw-600" id="sidebarName">Admin</div>
-      <div class="text-xs text-muted" id="sidebarRole">System Administrator</div>
+  <div style="width:1.75rem;height:1.75rem;border-radius:50%;background:rgba(0,104,47,.12);display:flex;align-items:center;justify-content:center;" id="side-avatar">
+            <span style="font-family:'Manrope',sans-serif;font-weight:900;font-size:.7rem;color:#00682f;" id="side-initials">?</span>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <p style="font-family:'Inter',sans-serif;font-size:.75rem;font-weight:600;color:#1b1c1c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="side-name">Admin</p>
+            <p style="font-family:'Inter',sans-serif;font-size:.6rem;color:#6e7a6e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="side-email">@neu.edu.ph</p>
+          </div>
+        <span class="admin-badge">Admin</span>
+      </div>
     </div>
+    <a href="index.html" class="nav-link nav-inactive" style="text-decoration:none;color:#6e7a6e;">
+      <span class="material-symbols-outlined" style="font-size:18px;">logout</span> Switch to Visitor
+    </a>
+  </div>
+</aside>
 
-    <div class="sidebar-section">
-      <div class="sidebar-label">Analytics</div>
-      <button class="sidebar-link active" onclick="showSection('overview')">
-        <span class="link-icon">📊</span> Overview
+<!-- ══ MAIN ══ -->
+<main class="admin-main">
+
+  <!-- Top bar -->
+  <header class="admin-topbar">
+    <div>
+      <p style="font-family:'Inter',sans-serif;font-size:.6rem;text-transform:uppercase;letter-spacing:.2em;color:#735c00;font-weight:600;">Institutional Metrics</p>
+      <h1 style="font-family:'Manrope',sans-serif;font-size:1.125rem;font-weight:900;color:#1b1c1c;line-height:1;" id="page-title">Administrator Dashboard</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:.75rem;">
+      <div style="background:#f0eded;border-radius:.75rem;padding:.375rem .75rem;display:flex;align-items:center;gap:.5rem;">
+        <span class="material-symbols-outlined" style="color:#6e7a6e;font-size:16px;">calendar_month</span>
+        <span style="font-family:'Inter',sans-serif;font-size:.75rem;color:#1b1c1c;" id="topbar-date">—</span>
+      </div>
+      <button onclick="exportCSV()" class="btn-export">
+        <span class="material-symbols-outlined" style="font-size:16px;">download</span> Export CSV
       </button>
-      <button class="sidebar-link" onclick="showSection('visitors')">
-        <span class="link-icon">👥</span> Visitor Logs
-      </button>
+    </div>
+  </header>
+
+  <!-- ══ TAB: DASHBOARD ══ -->
+  <div id="tab-dashboard" style="padding:2rem;">
+
+    <!-- Period buttons -->
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:2rem;">
+      <button onclick="setPeriod(this,'daily')"   class="period-btn active-period">Daily</button>
+      <button onclick="setPeriod(this,'weekly')"  class="period-btn">Weekly</button>
+      <button onclick="setPeriod(this,'monthly')" class="period-btn">Monthly</button>
+      <button onclick="setPeriod(this,'custom')"  class="period-btn">Custom Range</button>
+      <div id="custom-range" style="display:none;align-items:center;gap:.5rem;">
+        <input type="date" id="d-from" class="date-input"/>
+        <span style="font-family:'Inter',sans-serif;font-size:.75rem;color:#6e7a6e;">to</span>
+        <input type="date" id="d-to" class="date-input"/>
+        <button onclick="applyCustom()" class="btn-apply">Apply</button>
+      </div>
     </div>
 
-    <div class="sidebar-section" style="margin-top:0.5rem;">
-      <div class="sidebar-label">Management</div>
-      <button class="sidebar-link" onclick="showSection('blocked')">
-        <span class="link-icon">🚫</span> Blocked Users
-      </button>
-    </div>
-  </aside>
-
-  <!-- MAIN CONTENT -->
-  <div class="dashboard-main">
-
-    <!-- OVERVIEW SECTION -->
-    <div id="sectionOverview">
-      <div class="page-titlebar">
-        <div>
-          <h1 class="section-title">Visitor Overview</h1>
-          <p class="section-desc">Library visit statistics and analytics</p>
+    <!-- Stat cards -->
+    <div class="stats-bento" style="margin-bottom:2rem;">
+      <div class="stat-card">
+        <div class="accent-bar" style="margin-bottom:1rem;width:3rem;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <p class="stat-label">Total Visitors</p>
+            <p class="stat-number" id="s-total">247</p>
+            <p class="stat-sub" id="s-period-lbl">Today, March 19</p>
+          </div>
+          <div class="stat-icon-wrap">
+            <span class="material-symbols-outlined fill-icon text-primary">groups</span>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <span class="text-xs text-muted" id="lastUpdated"></span>
-          <button class="btn btn-outline btn-sm" onclick="loadStats()">🔄 Refresh</button>
+        <div style="margin-top:1rem;display:flex;align-items:center;gap:.375rem;">
+          <span class="material-symbols-outlined fill-icon text-primary" style="font-size:16px;">trending_up</span>
+          <span style="font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;color:#00682f;">+12%</span>
+          <span style="font-family:'Inter',sans-serif;font-size:.75rem;color:#6e7a6e;">vs. yesterday</span>
+        </div>
+        <div class="glow-orb"></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="accent-bar accent-gold" style="margin-bottom:.75rem;width:2rem;"></div>
+        <p class="stat-label">Inside Now</p>
+        <p class="stat-number" id="s-inside">38</p>
+        <div style="margin-top:.5rem;width:1.5rem;height:1.5rem;background:rgba(254,214,91,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+          <span class="material-symbols-outlined fill-icon text-gold-dark" style="font-size:14px;">person_pin</span>
         </div>
       </div>
 
-      <!-- Date Tabs -->
-      <div class="date-tabs" id="dateTabs">
-        <button class="date-tab active" data-range="today" onclick="setRange('today', this)">Today</button>
-        <button class="date-tab" data-range="week"  onclick="setRange('week',  this)">This Week</button>
-        <button class="date-tab" data-range="month" onclick="setRange('month', this)">This Month</button>
-        <button class="date-tab" data-range="custom" onclick="setRange('custom', this)">Custom</button>
+      <div class="stat-card">
+        <div class="accent-bar" style="margin-bottom:.75rem;width:2rem;"></div>
+        <p class="stat-label">Students</p>
+        <p class="stat-number" id="s-students">201</p>
+        <p style="font-family:'Inter',sans-serif;font-size:.65rem;color:#6e7a6e;margin-top:.25rem;" id="s-stu-pct">81% of total</p>
       </div>
 
-      <!-- Custom Date Range (hidden by default) -->
-      <div id="customDateRange" class="filter-bar hidden" style="margin-bottom:1.5rem;">
-        <div>
-          <label class="form-label" style="margin-bottom:4px;">From</label>
-          <input type="date" id="dateFrom" class="form-control" style="width:auto;min-width:0;" />
-        </div>
-        <div>
-          <label class="form-label" style="margin-bottom:4px;">To</label>
-          <input type="date" id="dateTo" class="form-control" style="width:auto;min-width:0;" />
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="loadStats()" style="align-self:flex-end;">Apply</button>
-      </div>
-
-      <!-- Stat Cards -->
-      <div class="stats-grid">
-        <div class="stat-card navy-accent anim-fadeinup">
-          <div class="stat-label">Total Visitors</div>
-          <div class="stat-number" id="statTotal">–</div>
-          <div class="stat-meta" id="statPeriod">Selected period</div>
-        </div>
-        <div class="stat-card gold-accent anim-fadeinup anim-delay-1">
-          <div class="stat-label">Students</div>
-          <div class="stat-number" id="statStudents">–</div>
-          <div class="stat-meta">Visitor type: Student</div>
-        </div>
-        <div class="stat-card green-accent anim-fadeinup anim-delay-2">
-          <div class="stat-label">Faculty / Staff</div>
-          <div class="stat-number" id="statEmployees">–</div>
-          <div class="stat-meta">Teachers & employees</div>
-        </div>
-        <div class="stat-card info-accent anim-fadeinup anim-delay-3">
-          <div class="stat-label">Top College</div>
-          <div class="stat-number" style="font-size:1.3rem;" id="statTopCollege">–</div>
-          <div class="stat-meta" id="statTopCollegeCount"></div>
-        </div>
-      </div>
-
-      <!-- Filters -->
-      <div class="filter-bar">
-        <select id="filterPurpose" class="form-control" onchange="applyFilters()">
-          <option value="">All Purposes</option>
-          <option value="reading">Reading / Leisure</option>
-          <option value="research">Research</option>
-          <option value="computer">Use of Computer</option>
-          <option value="assignments">Assignments</option>
-          <option value="borrowing">Book Borrowing / Returning</option>
-          <option value="group_study">Group Study</option>
-          <option value="other">Other</option>
-        </select>
-        <select id="filterCollege" class="form-control" onchange="applyFilters()">
-          <option value="">All Colleges</option>
-          <option value="CITE">CITE</option>
-          <option value="CBA">CBA</option>
-          <option value="CAS">CAS</option>
-          <option value="CED">CED</option>
-          <option value="COE">COE</option>
-          <option value="CNS">CNS</option>
-          <option value="CAFS">CAFS</option>
-          <option value="Admin">Admin</option>
-          <option value="Other">Other</option>
-        </select>
-        <select id="filterType" class="form-control" onchange="applyFilters()">
-          <option value="">All Visitor Types</option>
-          <option value="student">Student</option>
-          <option value="faculty">Faculty</option>
-          <option value="staff">Staff / Employee</option>
-          <option value="guest">Guest</option>
-        </select>
-        <button class="btn btn-outline btn-sm" onclick="clearFilters()">Clear Filters</button>
-      </div>
-
-      <!-- Visits Table -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon navy">📋</div>
-          <h3>Visitor Records</h3>
-          <span class="badge badge-navy" id="tableCount" style="margin-left:auto;">0 records</span>
-        </div>
-        <div class="table-wrapper" style="border:none;border-radius:0;box-shadow:none;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Visitor ID / Email</th>
-                <th>Purpose</th>
-                <th>College</th>
-                <th>Type</th>
-                <th>Date & Time</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="visitorsTableBody">
-              <tr>
-                <td colspan="7" class="text-center text-muted" style="padding:2rem;">Loading records…</td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="stat-card">
+        <div class="accent-bar accent-teal" style="margin-bottom:.75rem;width:2rem;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <p class="stat-label">Employees</p>
+            <p class="stat-number" id="s-employees">46</p>
+            <p style="font-family:'Inter',sans-serif;font-size:.65rem;color:#6e7a6e;" id="s-emp-pct">Faculty + Staff</p>
+          </div>
+          <div style="width:2rem;height:2rem;background:rgba(0,98,119,.08);border-radius:.5rem;display:flex;align-items:center;justify-content:center;">
+            <span class="material-symbols-outlined fill-icon text-tertiary" style="font-size:16px;">badge</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- VISITOR LOGS SECTION -->
-    <div id="sectionVisitors" class="hidden">
-      <div class="page-titlebar">
-        <div>
-          <h1 class="section-title">All Visitor Logs</h1>
-          <p class="section-desc">Complete history of all recorded visits</p>
+    <!-- Filters -->
+    <div class="filter-panel" style="margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;">
+        <span class="material-symbols-outlined text-muted" style="font-size:18px;">filter_alt</span>
+        <p style="font-family:'Manrope',sans-serif;font-size:.875rem;font-weight:700;color:#1b1c1c;">Filter Statistics</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1rem;">
+        <div class="form-group">
+          <label class="form-label">Reason for Visit</label>
+          <select id="fl-reason" class="form-select" onchange="applyFilters()">
+            <option value="">All Reasons</option>
+            <option>Reading</option>
+            <option>Researching</option>
+            <option>Computer Use</option>
+            <option>Assignments</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">College</label>
+          <select id="fl-college" class="form-select" onchange="applyFilters()">
+            <option value="">All Colleges</option>
+            <option>CCIT</option><option>CHAS</option><option>CBA</option>
+            <option>COED</option><option>CON</option><option>CRIM</option>
+            <option>COE</option><option>CAS</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Employee Type</label>
+          <select id="fl-emp" class="form-select" onchange="applyFilters()">
+            <option value="">All Types</option>
+            <option>Student</option>
+            <option>Faculty</option>
+            <option>Staff</option>
+          </select>
         </div>
       </div>
-      <div class="card">
-        <div class="card-body text-center text-muted" style="padding:3rem;">
-          Switch to <strong>Overview</strong> to view visitor records with filters.
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;" id="reason-chips">
+        <span class="chip active" onclick="chipReason(this,'')">All</span>
+        <span class="chip" onclick="chipReason(this,'Reading')">Reading</span>
+        <span class="chip" onclick="chipReason(this,'Researching')">Researching</span>
+        <span class="chip" onclick="chipReason(this,'Computer Use')">Computer Use</span>
+        <span class="chip" onclick="chipReason(this,'Assignments')">Assignments</span>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+      <div class="chart-card">
+        <p style="font-family:'Manrope',sans-serif;font-size:.875rem;font-weight:800;color:#1b1c1c;margin-bottom:1.25rem;">Visits by Reason</p>
+        <div style="display:flex;flex-direction:column;gap:.75rem;" id="purpose-bars"></div>
+      </div>
+      <div class="chart-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <p style="font-family:'Manrope',sans-serif;font-size:.875rem;font-weight:800;color:#1b1c1c;">Hourly Traffic</p>
+          <span class="live-badge">Live</span>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:.375rem;height:7rem;" id="hourly-chart"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:.5rem;font-family:'Inter',sans-serif;font-size:.6rem;color:#6e7a6e;">
+          <span>7AM</span><span>9AM</span><span>11AM</span><span>1PM</span><span>3PM</span><span>5PM</span>
         </div>
       </div>
     </div>
 
-    <!-- BLOCKED USERS SECTION -->
-    <div id="sectionBlocked" class="hidden">
-      <div class="page-titlebar">
-        <div>
-          <h1 class="section-title">Blocked Users</h1>
-          <p class="section-desc">Manage blocked visitor accounts</p>
+    <!-- Blocked panel + digest -->
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.5rem;">
+      <div class="blocked-panel">
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <div style="width:2.5rem;height:2.5rem;background:#ba1a1a;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span class="material-symbols-outlined fill-icon" style="color:#fff;font-size:18px;">gavel</span>
+          </div>
+          <div>
+            <p style="font-family:'Manrope',sans-serif;font-size:1rem;font-weight:800;color:#93000a;" id="blocked-count-txt">0 Suspended IDs</p>
+            <p style="font-family:'Public Sans',sans-serif;font-size:.75rem;color:rgba(147,0,10,.7);">Require manual reactivation</p>
+          </div>
         </div>
+        <div id="blocked-list-mini" style="margin-top:1rem;"></div>
+        <button onclick="showTab('users')" style="margin-top:.75rem;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;color:#ba1a1a;background:none;border:none;cursor:pointer;text-decoration:underline;">Manage blocked users →</button>
       </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-icon" style="background:var(--danger-bg);">🚫</div>
-          <h3>Blocked Accounts</h3>
+      <div style="background:rgba(254,214,91,.2);border-radius:1.5rem;padding:1.5rem;display:flex;align-items:center;gap:1.25rem;">
+        <div style="flex:1;">
+          <p style="font-family:'Manrope',sans-serif;font-size:1rem;font-weight:800;color:#1b1c1c;">Weekly Digest Ready</p>
+          <p style="font-family:'Public Sans',sans-serif;font-size:.875rem;color:#6e7a6e;margin-top:.25rem;">Academic usage report based on last week's traffic.</p>
         </div>
-        <div class="table-wrapper" style="border:none;border-radius:0;box-shadow:none;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Visitor ID / Email</th>
-                <th>Blocked At</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="blockedTableBody">
-              <tr>
-                <td colspan="3" class="text-center text-muted" style="padding:2rem;">Loading…</td>
-              </tr>
-            </tbody>
-          </table>
+        <button onclick="exportCSV()" class="btn-secondary">
+          <span class="material-symbols-outlined" style="font-size:16px;">description</span> Download
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB: VISITOR LOGS ══ -->
+  <div id="tab-logs" style="padding:2rem;display:none;">
+    <div class="filter-panel" style="margin-bottom:1.5rem;">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;">
+        <span class="material-symbols-outlined text-muted" style="font-size:18px;">filter_alt</span>
+        <p style="font-family:'Manrope',sans-serif;font-size:.875rem;font-weight:700;color:#1b1c1c;">Filter Logs</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;">
+        <div class="form-group">
+          <label class="form-label">College</label>
+          <select id="tl-college" class="form-select" onchange="renderLogTable()">
+            <option value="">All</option>
+            <option>CCIT</option><option>CHAS</option><option>CBA</option>
+            <option>COED</option><option>CON</option><option>CRIM</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">User Type</label>
+          <select id="tl-type" class="form-select" onchange="renderLogTable()">
+            <option value="">All</option>
+            <option>Student</option><option>Faculty</option><option>Staff</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Purpose</label>
+          <select id="tl-purpose" class="form-select" onchange="renderLogTable()">
+            <option value="">All</option>
+            <option>Reading</option><option>Researching</option>
+            <option>Computer Use</option><option>Assignments</option>
+          </select>
         </div>
       </div>
     </div>
 
-  </div><!-- /dashboard-main -->
-</div><!-- /dashboard-grid -->
+    <div class="log-table-card">
+      <div style="padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eae7e7;">
+        <p style="font-family:'Manrope',sans-serif;font-size:.875rem;font-weight:800;color:#1b1c1c;">Visitor Entry Logs</p>
+        <span style="font-family:'Inter',sans-serif;font-size:.75rem;color:#6e7a6e;" id="log-count-txt">—</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;text-align:left;border-collapse:collapse;min-width:640px;">
+          <thead>
+            <tr style="background:#f6f3f2;">
+              <th class="table-th">Visitor</th>
+              <th class="table-th">College</th>
+              <th class="table-th">Purpose</th>
+              <th class="table-th">Time In</th>
+              <th class="table-th">Status</th>
+              <th class="table-th">Action</th>
+            </tr>
+          </thead>
+          <tbody id="log-tbody"></tbody>
+        </table>
+      </div>
+      <div style="padding:.75rem 1.25rem;background:#f6f3f2;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:'Public Sans',sans-serif;font-size:.75rem;color:#6e7a6e;" id="log-pg-info">—</span>
+        <div style="display:flex;gap:.25rem;" id="log-pg-btns"></div>
+      </div>
+    </div>
+  </div>
 
-<footer class="site-footer">
-  © 2025 <span>New Era University</span> · Library Visitor Log — Admin Panel
-</footer>
+  <!-- ══ TAB: USER MANAGEMENT ══ -->
+  <div id="tab-users" style="padding:2rem;display:none;">
+    <div class="log-table-card">
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid #eae7e7;display:flex;align-items:center;justify-content:space-between;">
+        <p style="font-family:'Manrope',sans-serif;font-size:.875rem;font-weight:800;color:#1b1c1c;">User Management</p>
+        <span class="blocked-badge-pill" id="badge-blocked">0 blocked</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;text-align:left;border-collapse:collapse;min-width:520px;">
+          <thead>
+            <tr style="background:#f6f3f2;">
+              <th class="table-th">Name</th>
+              <th class="table-th">Type</th>
+              <th class="table-th">College</th>
+              <th class="table-th">Status</th>
+              <th class="table-th">Action</th>
+            </tr>
+          </thead>
+          <tbody id="user-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
 
 <script src="js/app.js"></script>
-<script>
-  // Dashboard-specific init
-  document.addEventListener('DOMContentLoaded', () => {
-    loadStats();
-    loadBlockedUsers();
-
-    const now = new Date();
-    document.getElementById('lastUpdated').textContent = 'Last updated: ' + now.toLocaleTimeString();
-  });
-
-  function showSection(name) {
-    ['overview','visitors','blocked'].forEach(s => {
-      document.getElementById('section' + s.charAt(0).toUpperCase() + s.slice(1)).classList.add('hidden');
-    });
-    document.getElementById('sectionOverview'.replace('overview', '').replace('visitors','').replace('blocked',''));
-    const map = { overview: 'sectionOverview', visitors: 'sectionVisitors', blocked: 'sectionBlocked' };
-    document.getElementById(map[name]).classList.remove('hidden');
-
-    document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-  }
-</script>
-
 </body>
 </html>

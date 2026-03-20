@@ -127,7 +127,13 @@ function showVisitorForm(user) {
 
   const headerInfo = document.getElementById('headerUserInfo');
   const btnLogout  = document.getElementById('btnLogout');
-  if (headerInfo) { headerInfo.textContent = user.email; headerInfo.classList.remove('hidden'); }
+  // Header photo
+  const hPhoto = document.getElementById("headerUserPhoto");
+  const hName  = document.getElementById("headerUserName");
+  const hInfo  = document.getElementById("headerUserInfo");
+  if (hInfo) hInfo.classList.remove("hidden");
+  if (hPhoto && user.photoURL) { hPhoto.src = user.photoURL; hPhoto.style.display = "block"; }
+  if (hName) hName.textContent = user.displayName || user.email;
   if (btnLogout)  btnLogout.classList.remove('hidden');
 
   const avatarEl  = document.getElementById('userAvatar');
@@ -135,7 +141,16 @@ function showVisitorForm(user) {
   const emailEl   = document.getElementById('userEmail');
   const timeEl    = document.getElementById('visitTime');
 
-  if (avatarEl)  avatarEl.textContent  = getInitials(user.displayName || user.email);
+  // Profile photo
+  const photoEl = document.getElementById("userPhotoImg");
+  if (photoEl && user.photoURL) {
+    photoEl.src = user.photoURL;
+    photoEl.classList.remove("hidden");
+    const av = document.getElementById("userAvatar");
+    if (av) av.style.display = "none";
+  } else if (avatarEl) {
+    avatarEl.textContent = getInitials(user.displayName || user.email);
+  }
   if (welcomeEl) welcomeEl.textContent = 'Welcome to NEU Library!';
   if (emailEl)   emailEl.textContent   = user.displayName ? user.displayName + ' · ' + user.email : user.email;
 
@@ -155,8 +170,10 @@ async function logVisitor() {
   const college     = document.getElementById('college')?.value;
   const purpose     = document.getElementById('purpose')?.value;
   const visitorType = document.getElementById('visitorType')?.value;
+  const program     = document.getElementById('program')?.value;
+  const yearLevel   = document.getElementById('yearLevel')?.value;
 
-  if (!visitorID || !college || !purpose) {
+  if (!visitorID || !college || !purpose || !visitorType) {
     showAlert('formAlert', 'danger', '⚠️ Please fill in all required fields.');
     return;
   }
@@ -182,6 +199,8 @@ async function logVisitor() {
     purpose:     purpose,
     visitorType: visitorType,
     isEmployee:  isEmployee,
+    program:     program || "N/A",
+    yearLevel:   yearLevel || "N/A",
     timestamp:   firebase.firestore.FieldValue.serverTimestamp()
   })
   .then(() => {

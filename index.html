@@ -3,38 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NEU Library Visitor Log</title>
+  <title>Lorenzo NEU Library Visitor Log</title>
   <link rel="stylesheet" href="css/styles.css">
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-<!-- ── HEADER ── -->
 <header class="site-header">
   <a class="brand" href="#">
     <div class="brand-logo">N</div>
     <div class="brand-text">
       <span class="brand-name">NEU Library</span>
-      <span class="brand-sub">Visitor Log </span>
+      <span class="brand-sub">Visitor Log System</span>
     </div>
   </a>
   <nav class="header-nav">
-    <span id="headerUserInfo" class="text-sm text-muted hidden"></span>
+    <div id="headerUserInfo" class="header-user hidden">
+      <img id="headerUserPhoto" src="" alt="" class="header-user-photo" />
+      <span id="headerUserName" class="text-sm text-muted"></span>
+    </div>
     <button id="btnLogout" class="nav-btn ghost hidden" onclick="logout()">Sign Out</button>
   </nav>
 </header>
 
-<!-- ── HERO ── -->
 <div id="heroSection" class="hero-section">
   <div class="hero-badge">📚 New Era University</div>
   <h1 class="hero-title">Library <span>Visitor</span> Log</h1>
   <p class="hero-subtitle">Track and record all student, faculty, and staff visits to the NEU Library.</p>
 </div>
 
-<!-- ── MAIN ── -->
 <main class="main-container narrow">
 
   <!-- LOGIN CARD -->
@@ -66,12 +65,20 @@
     <button class="btn btn-primary btn-full" onclick="loginWithEmail()">Continue with Email</button>
   </div>
 
-  <!-- VISITOR FORM (shown after login for regular user) -->
+  <!-- VISITOR FORM -->
   <div id="visitorSection" class="hidden anim-fadeinup">
 
-    <!-- Welcome Banner -->
+    <!-- NEU Logo + Welcome -->
+    <div class="neu-logo-wrap anim-fadeinup">
+      <img src="https://upload.wikimedia.org/wikipedia/en/c/c6/New_Era_University.svg" alt="NEU Logo" class="neu-logo" />
+    </div>
+
+    <!-- Welcome Banner with Profile Photo -->
     <div class="welcome-banner">
-      <div class="welcome-avatar" id="userAvatar">–</div>
+      <div class="welcome-avatar-wrap">
+        <img id="userPhotoImg" src="" alt="" class="user-photo hidden" />
+        <div class="welcome-avatar" id="userAvatar">–</div>
+      </div>
       <div class="welcome-text">
         <h2 id="welcomeMsg">Welcome to NEU Library!</h2>
         <p id="userEmail">–</p>
@@ -95,63 +102,52 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">College / Office <span class="required">*</span></label>
-       <select id="college" class="form-control">
-  <option value="">Select your college / course</option>
-  <optgroup label="CITE">
-    <option value="BSIT">BSIT</option>
-    <option value="BSCS">BSCS</option>
-    <option value="BSIS">BSIS</option>
-    <option value="BSEMC">BSEMC</option>
-  </optgroup>
-  <optgroup label="CBA">
-    <option value="BSBA">BSBA</option>
-    <option value="BSA">BSA</option>
-    <option value="BSTM">BSTM</option>
-    <option value="BSHM">BSHM</option>
-  </optgroup>
-  <optgroup label="CED">
-    <option value="BEED">BEED</option>
-    <option value="BSED-ENG">BSED-English</option>
-    <option value="BSED-MATH">BSED-Math</option>
-    <option value="BSED-SCI">BSED-Science</option>
-    <option value="BPEA">BPEA</option>
-  </optgroup>
-  <optgroup label="COE">
-    <option value="BSCE">BSCE</option>
-    <option value="BSEE">BSEE</option>
-    <option value="BSECE">BSECE</option>
-    <option value="BSME">BSME</option>
-  </optgroup>
-  <optgroup label="CNS">
-    <option value="BSN">BSN</option>
-    <option value="BSMT">BSMT</option>
-  </optgroup>
-  <optgroup label="CAFS">
-    <option value="BSARCH">BSARCH</option>
-    <option value="BSID">BSID</option>
-  </optgroup>
-  <optgroup label="CCJE">
-    <option value="BSCRIM">BSCRIM</option>
-  </optgroup>
-  <optgroup label="CAS">
-    <option value="ABCOM">ABCOM</option>
-    <option value="ABPSYCH">ABPSYCH</option>
-    <option value="BSSW">BSSW</option>
-  </optgroup>
-  <optgroup label="Senior High School">
-    <option value="SHS-STEM">SHS-STEM</option>
-    <option value="SHS-ABM">SHS-ABM</option>
-    <option value="SHS-HUMSS">SHS-HUMSS</option>
-    <option value="SHS-TVL">SHS-TVL</option>
-  </optgroup>
-  <optgroup label="Other">
-    <option value="Admin">Administration</option>
-    <option value="Faculty">Faculty</option>
-    <option value="Staff">Staff</option>
-    <option value="Other">Other</option>
-  </optgroup>
-</select>
+        <label class="form-label">Visitor Type <span class="required">*</span></label>
+        <select id="visitorType" class="form-control" onchange="updateFormFields()">
+          <option value="">Select type</option>
+          <option value="student">Student</option>
+          <option value="faculty">Faculty</option>
+          <option value="staff">Staff</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">College / Department <span class="required">*</span></label>
+        <select id="college" class="form-control" onchange="updatePrograms()">
+          <option value="">Select department</option>
+          <option value="CICS">College of Informatics and Computing Studies</option>
+          <option value="CHAS">College of Health and Allied Sciences</option>
+          <option value="CBA">College of Business Administration</option>
+          <option value="CED">College of Education</option>
+          <option value="CN">College of Nursing</option>
+          <option value="CCRIM">College of Criminology</option>
+          <option value="COE">College of Engineering</option>
+          <option value="CAS">College of Arts and Sciences</option>
+          <option value="REG">Office of the Registrar</option>
+          <option value="LIB">Library</option>
+          <option value="ITD">IT Department</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="programGroup">
+        <label class="form-label">Program <span class="required">*</span></label>
+        <select id="program" class="form-control">
+          <option value="">Select program</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="yearLevelGroup">
+        <label class="form-label">Year Level <span class="required">*</span></label>
+        <select id="yearLevel" class="form-control">
+          <option value="">Select year</option>
+          <option value="1st Year">1st Year</option>
+          <option value="2nd Year">2nd Year</option>
+          <option value="3rd Year">3rd Year</option>
+          <option value="4th Year">4th Year</option>
+          <option value="Graduate">Graduate</option>
+          <option value="N/A">N/A (Faculty/Staff)</option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -168,16 +164,6 @@
         </select>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Visitor Type</label>
-        <select id="visitorType" class="form-control">
-          <option value="student">Student</option>
-          <option value="faculty">Faculty</option>
-          <option value="staff">Staff / Employee</option>
-          <option value="guest">Guest</option>
-        </select>
-      </div>
-
       <button class="btn btn-primary btn-full btn-lg" onclick="logVisitor()" id="submitBtn">
         <span id="submitBtnText">✅ Submit Visit Log</span>
         <span class="spinner hidden" id="submitSpinner"></span>
@@ -187,11 +173,57 @@
   </div>
 </main>
 
-<!-- ── FOOTER ── -->
 <footer class="site-footer">
-  © 2025 <span>New Era University</span> · Library Visitor Log System · All rights reserved.
+  © 2026 <span>New Era University</span> · Library Visitor Log System · All rights reserved.
 </footer>
 
 <script src="js/app.js"></script>
+<script>
+// Program options per college
+const programsByCollege = {
+  CICS: ['BS Information Technology', 'BS Computer Science', 'BS Information Systems', 'BS Entertainment and Multimedia Computing'],
+  CHAS: ['BS Medical Technology', 'BS Physical Therapy', 'BS Pharmacy', 'BS Radiologic Technology'],
+  CBA:  ['BS Business Administration', 'BS Accountancy', 'BS Management Accounting', 'BS Tourism Management', 'BS Hospitality Management', 'BS Real Estate Management'],
+  CED:  ['Bachelor of Elementary Education', 'BSED - English', 'BSED - Filipino', 'BSED - Mathematics', 'BSED - Science', 'BSED - Social Studies', 'BSED - MAPEH', 'BS Physical Education'],
+  CN:   ['BS Nursing'],
+  CCRIM:['BS Criminology'],
+  COE:  ['BS Civil Engineering', 'BS Electrical Engineering', 'BS Electronics Engineering', 'BS Mechanical Engineering', 'BS Industrial Engineering', 'BS Chemical Engineering'],
+  CAS:  ['AB Communication', 'AB Political Science', 'AB Psychology', 'BS Social Work', 'BS Mathematics', 'BS Biology'],
+  REG:  ['N/A (Faculty/Staff)'],
+  LIB:  ['N/A (Faculty/Staff)'],
+  ITD:  ['N/A (Faculty/Staff)'],
+  Other:['N/A']
+};
+
+function updatePrograms() {
+  const college = document.getElementById('college').value;
+  const programSelect = document.getElementById('program');
+  programSelect.innerHTML = '<option value="">Select program</option>';
+  if (college && programsByCollege[college]) {
+    programsByCollege[college].forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p;
+      opt.textContent = p;
+      programSelect.appendChild(opt);
+    });
+  }
+}
+
+function updateFormFields() {
+  const type = document.getElementById('visitorType').value;
+  const yearGroup = document.getElementById('yearLevelGroup');
+  if (type === 'faculty' || type === 'staff') {
+    document.getElementById('yearLevel').value = 'N/A';
+    yearGroup.style.opacity = '0.5';
+    yearGroup.style.pointerEvents = 'none';
+  } else {
+    yearGroup.style.opacity = '1';
+    yearGroup.style.pointerEvents = 'auto';
+    if (document.getElementById('yearLevel').value === 'N/A') {
+      document.getElementById('yearLevel').value = '';
+    }
+  }
+}
+</script>
 </body>
 </html>

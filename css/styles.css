@@ -993,3 +993,50 @@ tr.blocked-user td {
   .main-container { padding: 1.5rem 1rem 3rem; }
   .log-form-card { padding: 1.5rem 1.25rem; }
 }
+
+/* ── PROFILE PHOTO ── */
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-user-photo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.welcome-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.user-photo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.25);
+}
+
+.user-photo.hidden { display: none; }
+
+/* ── NEU LOGO ── */
+.neu-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.neu-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(13,43,94,0.18));
+  border-radius: 50%;
+  background: white;
+  padding: 6px;
+}
